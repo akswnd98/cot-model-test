@@ -1,9 +1,10 @@
 
 from langchain_community.chat_models.llamacpp import ChatLlamaCpp
+from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_core.tools import tool
 
 llm = ChatLlamaCpp(
-  model_path="./DeepSeek-R1-Distill-Llama-8B-Q4_0.gguf",
+  model_path="../deepseek-r1-distill-llama-8b/DeepSeek-R1-Distill-Llama-8B-Q4_0.gguf",
   n_ctx=4096
 )
 
@@ -33,11 +34,24 @@ Args:
   return "email sent successfully"
 
 
-llm.bind_tools(tools=[get_current_weather, send_email])
+llm.bind_tools(
+  tools=[get_current_weather, send_email],
+  tool_choice={
+    "type": "function",
+    "function": {
+      "name": "get_current_weather"
+    }
+  }
+)
+
+messages = [
+  SystemMessage(content="You are a helpful assistant. You can call tool functions in JSON format if needed."),
+  HumanMessage(content="please check current weather on seoul korea. i use celsius to describe degree.")
+]
 
 output = llm.invoke(
-  "please tell me current weather in celsius",
-  max_tokens=1024
+  messages,
+  max_tokens=2048
 )
 
 print(output)
